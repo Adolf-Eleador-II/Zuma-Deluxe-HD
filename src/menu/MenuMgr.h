@@ -208,7 +208,7 @@ typedef struct _MenuMgr {
 void MenuMgr_Init(MenuMgr* m, int* curLvl, int* curDiff);
 void MenuMgr_Set(Engine *engine, MenuMgr* m, int room);
 void MenuMgr_Update(Engine *engine, MenuMgr* m);
-void MenuMgr_Draw(Engine *engine, MenuMgr* m);
+void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m);
 
 
 #endif

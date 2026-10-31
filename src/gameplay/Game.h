@@ -74,14 +74,14 @@ typedef struct _Game {
 
 
 
-void Game_Init(Engine*, Game*, int, int);
+void Game_Init(LevelMgr*, Engine*, Game*, int, int);
 
-void Game_Update(Engine*, Game*, int*, int);
+void Game_Update(LevelMgr*, Engine*, Game*, int*, int);
 void Game_UpdateTreasure(Engine*, Game*);
 void Game_UpdateOutro(Engine*, Game*);
 void Game_UpdateIntro(Engine*, Game*);
 
-void Game_Draw(Engine*, Game*);
+void Game_Draw(LevelMgr*, Engine*, Game*);
 void Game_DrawTreasure(Engine*, Game*);
 void Game_DrawOutro(Engine*, Game*);
 void Game_DrawIntro(Engine*, Game*);

@@ -10,7 +10,7 @@ void constrain(int* a, int min, int max) {
 
 LevelMgr levelMgr;
 
-void Game_Init(Engine *engine, Game* game, int lvlID, int difficulty) {
+void Game_Init(LevelMgr *levelMgr, Engine *engine, Game* game, int lvlID, int difficulty) {
     game->stageID = 0;
     game->score = 0;
     game->lives = 0;
@@ -23,45 +23,45 @@ void Game_Init(Engine *engine, Game* game, int lvlID, int difficulty) {
     game->subHeaderFontScale = 0;
     game->difficulty = difficulty;
 
-    Stage* stg = LevelMgr_GetStage(game->stageID);
+    Stage* stg = LevelMgr_GetStage(levelMgr, game->stageID);
 
     game->lvlID = lvlID; 
     constrain(&game->lvlID, 0, stg->levelsLen-1);
 
-    game->lvl = LevelMgr_GetLevelFromStage(game->stageID, game->lvlID);
-    Level_Load(engine, game->lvl);
+    game->lvl = LevelMgr_GetLevelFromStage(levelMgr, game->stageID, game->lvlID);
+    Level_Load(levelMgr, engine, game->lvl);
 
-    game->graphics = LevelMgr_GetLevelGraphics(game->lvl);
+    game->graphics = LevelMgr_GetLevelGraphics(levelMgr, game->lvl);
     switch(difficulty) {
         case 0:
-            game->settings = &levelMgr.settings[4];
+            game->settings = &levelMgr->settings[4];
             game->settings->ballColors = 4;
             game->settings->partTime = 70;
             game->settings->ballStartCount = 40;
             break;
         case 1:
-            game->settings = &levelMgr.settings[8];
+            game->settings = &levelMgr->settings[8];
             game->settings->ballColors = 5;
             game->settings->partTime = 100;
             game->settings->ballStartCount = 50;
             break;
         case 2:
-            game->settings = &levelMgr.settings[13];
+            game->settings = &levelMgr->settings[13];
             game->settings->ballColors = 6;
             game->settings->repeatChance = 25;
             game->settings->partTime = 120;
             game->settings->ballStartCount = 60;
             break;
         case 3:
-            game->settings = &levelMgr.settings[24];
+            game->settings = &levelMgr->settings[24];
             game->settings->ballColors = 6;
             game->settings->partTime = 150;
             game->settings->ballStartCount = 60;
             break;
     }
 
-    if (levelMgr.bestTime[game->lvlID][game->difficulty] != 0)
-        game->settings->partTime = levelMgr.bestTime[game->lvlID][game->difficulty];
+    if (levelMgr->bestTime[game->lvlID][game->difficulty] != 0)
+        game->settings->partTime = levelMgr->bestTime[game->lvlID][game->difficulty];
     
     Frog_Init(&game->frog, (game->graphics->frogPos.x + 106) * engine->scale_x, 
         game->graphics->frogPos.y * engine->scale_y);
@@ -162,7 +162,7 @@ static bool _Game_FrogControl(Engine *engine, Game* game, int mouseClicked) {
     return isShooted;
 }
 
-static bool _Game_isEnd(Engine *engine, Game* game, int* inMenu) {
+static bool _Game_isEnd(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu) {
     if (!game->isLosed && !game->isWon)
         return false;
 
@@ -177,14 +177,14 @@ static bool _Game_isEnd(Engine *engine, Game* game, int* inMenu) {
             DialogueBox_Destroy(game->dbStats);
             game->dbStats = NULL;
 
-            if (game->score > levelMgr.bestScore[game->lvlID][game->difficulty])
-                levelMgr.bestScore[game->lvlID][game->difficulty] = game->score;
+            if (game->score > levelMgr->bestScore[game->lvlID][game->difficulty])
+                levelMgr->bestScore[game->lvlID][game->difficulty] = game->score;
 
-            if (game->time < levelMgr.bestTime[game->lvlID][game->difficulty] ||
-                levelMgr.bestTime[game->lvlID][game->difficulty] == 0)
-                    levelMgr.bestTime[game->lvlID][game->difficulty] = game->time;
+            if (game->time < levelMgr->bestTime[game->lvlID][game->difficulty] ||
+                levelMgr->bestTime[game->lvlID][game->difficulty] == 0)
+                    levelMgr->bestTime[game->lvlID][game->difficulty] = game->time;
 
-            LevelMgr_SaveProgress();
+            LevelMgr_SaveProgress(levelMgr);
 
             *inMenu = 1;
             Level_Free(game->lvl);
@@ -313,7 +313,7 @@ static void _Game_HandleGameWon(Engine *engine, Game* game) {
 
 }
 
-static bool _Game_IsGameLose(Engine *engine, Game* game) {
+static bool _Game_IsGameLose(LevelMgr *levelMgr, Engine *engine, Game* game) {
     if (!(game->chain.len == 0 && game->chain.isEndReached))
         return false;
 
@@ -321,7 +321,7 @@ static bool _Game_IsGameLose(Engine *engine, Game* game) {
     if (game->lives >= 1) {
         int lives = game->lives - 1;
         Engine_PlaySound(engine, SND_CHANT14);
-        Game_Init(engine, game, game->stageID, game->lvlID);
+        Game_Init(levelMgr, engine, game, game->stageID, game->lvlID);
         game->lives = lives;
         return true;
     } 
@@ -363,7 +363,7 @@ static bool _Game_IsGameLose(Engine *engine, Game* game) {
 
 }
 
-void Game_Update(Engine *engine, Game* game, int* inMenu, int mouseClicked) {
+void Game_Update(LevelMgr *levelMgr, Engine *engine, Game* game, int* inMenu, int mouseClicked) {
     // Get mouse pos and rotate frog;
     Engine_GetMousePos(engine, &game->mx, &game->my);
     Frog_Rotate(&game->frog, game->mx, game->my);
@@ -375,7 +375,7 @@ void Game_Update(Engine *engine, Game* game, int* inMenu, int mouseClicked) {
 
     bool isShooted = _Game_FrogControl(engine, game, mouseClicked);
 
-    if (_Game_isEnd(engine, game, inMenu)) return;
+    if (_Game_isEnd(levelMgr, engine, game, inMenu)) return;
     if (_Game_HandleMenu(engine, game, inMenu)) return;
 
     BallChain_Update(engine, &game->chain, game->lvl->spiral, 
@@ -395,7 +395,7 @@ void Game_Update(Engine *engine, Game* game, int* inMenu, int mouseClicked) {
 
     _Game_GenerateChain(engine, game);
     _Game_HandleGameWon(engine, game);
-    if (_Game_IsGameLose(engine, game)) return;
+    if (_Game_IsGameLose(levelMgr, engine, game)) return;
 
     // UI Update
     Button_Update(engine, &game->btnMenu);
@@ -439,7 +439,7 @@ void Game_Update(Engine *engine, Game* game, int* inMenu, int mouseClicked) {
     Game_UpdateTreasure(engine, game);
 }
 
-void Game_Draw(Engine *engine, Game* game) {
+void Game_Draw(LevelMgr *levelMgr, Engine *engine, Game* game) {
     Level_Draw(engine, game->lvl);
     Game_DrawFinish(engine, game);
     Frog_Draw(engine, &game->frog, game->isIntroEnded);
@@ -514,7 +514,7 @@ void Game_Draw(Engine *engine, Game* game) {
             Engine_DrawText(engine, buff, FONT_ARIAL_12, 240, 16*(i+2));
         }
 
-        Level_DrawDebug(engine, game->lvl);
+        Level_DrawDebug(levelMgr, engine, game->lvl);
     }
 }
 

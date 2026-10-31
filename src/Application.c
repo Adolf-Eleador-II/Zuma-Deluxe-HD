@@ -30,7 +30,7 @@ typedef struct {
   bool isRunning;
 } App;
 
-static int ApplicationZuma_LoadResources(Engine *engine) {
+static int ApplicationZuma_LoadResources(LevelMgr *levelMgr, Engine *engine) {
   if (!Engine_LoadSettings(engine))
     return 9;
 
@@ -46,7 +46,7 @@ static int ApplicationZuma_LoadResources(Engine *engine) {
   if (!Engine_MusicLoad(engine, fileMusic))
     return 7;
 
-  if (!LevelMgr_LoadLevels("levels.xml"))
+  if (!LevelMgr_LoadLevels(levelMgr, "levels.xml"))
     return 8;
 }
 
@@ -91,7 +91,7 @@ static void ApplicationZuma_HandleEvents(App *app) {
   }
 }
 
-static void ApplicationZuma_Update(Engine *engine, App *app) {
+static void ApplicationZuma_Update(LevelMgr *levelMgr, Engine *engine, App *app) {
   SDL_RenderClear(engine->render);
 
   if (app->inMenu) {
@@ -99,25 +99,26 @@ static void ApplicationZuma_Update(Engine *engine, App *app) {
 
     if (app->menuMgr.roomID == MR_GAME && app->inMenu) {
       app->inMenu = 0;
-      Game_Init(engine, &app->game, app->curLvl, app->curDifficulty);
+      Game_Init(levelMgr, engine, &app->game, app->curLvl, app->curDifficulty);
     }
 
-    MenuMgr_Draw(engine, &app->menuMgr);
+    MenuMgr_Draw(levelMgr, engine, &app->menuMgr);
   } else {
-    Game_Update(engine, &app->game, &app->inMenu, app->mouseClicked);
+    Game_Update(levelMgr, engine, &app->game, &app->inMenu, app->mouseClicked);
     if (app->inMenu) {
       MenuMgr_Set(engine, &app->menuMgr, MR_GAUNTLET);
       return;
     }
 
-    Game_Draw(engine, &app->game);
+    Game_Draw(levelMgr, engine, &app->game);
   }
 
   SDL_RenderPresent(engine->render);
 }
 
 int ApplicationZuma_Start(void) {
-  Engine engine; 
+  Engine engine;
+  LevelMgr levelMgr;
   if (!Engine_Init(&engine))
     return 1;
 
@@ -125,7 +126,7 @@ int ApplicationZuma_Start(void) {
     return 2;
 
   ApplicationZuma_ShowStartupImage(&engine);
-  ApplicationZuma_LoadResources(&engine);
+  ApplicationZuma_LoadResources(&levelMgr, &engine);
 
   srand(time(NULL));
 
@@ -143,7 +144,7 @@ int ApplicationZuma_Start(void) {
 
     app.frameStart = SDL_GetTicks();
 
-    ApplicationZuma_Update(&engine, &app);
+    ApplicationZuma_Update(&levelMgr, &engine, &app);
 
     app.frameTime = SDL_GetTicks() - app.frameStart;
 
@@ -151,7 +152,7 @@ int ApplicationZuma_Start(void) {
       SDL_Delay(FRAME_DELAY - app.frameTime);
   }
 
-  LevelMgr_Free();
+  LevelMgr_Free(&levelMgr);
   Engine_Destroy(&engine);
 
   return 0;

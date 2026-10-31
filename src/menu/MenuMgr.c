@@ -1159,7 +1159,7 @@ void MenuMgr_Update(Engine *engine, MenuMgr* m) {
 }
 
 
-void MenuMgr_Draw(Engine *engine, MenuMgr* m) {
+void MenuMgr_Draw(LevelMgr *levelMgr, Engine *engine, MenuMgr* m) {
     if (m->roomID == MR_GAME) 
         return;
 
@@ -1204,7 +1204,7 @@ void MenuMgr_Draw(Engine *engine, MenuMgr* m) {
         Engine_DrawTextExt(engine, buff, FONT_CANCUN_10, color, true,
             false, 924, 632);
 
-        sprintf(buff, "%d", levelMgr.bestScore[*m->curLvl][*m->curDiff]);
+        sprintf(buff, "%d", levelMgr->bestScore[*m->curLvl][*m->curDiff]);
         color.b = 0;
         Engine_DrawTextExt(engine, buff, FONT_CANCUN_10, color, true,
             false, 1140, 632);
@@ -1215,8 +1215,8 @@ void MenuMgr_Draw(Engine *engine, MenuMgr* m) {
             false, 924, 686);
 
         int min, sec;
-        min = levelMgr.bestTime[*m->curLvl][*m->curDiff] / 60;
-        sec = levelMgr.bestTime[*m->curLvl][*m->curDiff] % 60;
+        min = levelMgr->bestTime[*m->curLvl][*m->curDiff] / 60;
+        sec = levelMgr->bestTime[*m->curLvl][*m->curDiff] % 60;
         sprintf(buff, "%d:%02d", min, sec);
         color.b = 0;
         Engine_DrawTextExt(engine, buff, FONT_CANCUN_10, color, true,
