@@ -30,27 +30,27 @@ typedef struct {
   bool isRunning;
 } App;
 
-static int ApplicationZuma_LoadResources(void) {
-  if (!Engine_LoadSettings())
+static int ApplicationZuma_LoadResources(Engine *engine) {
+  if (!Engine_LoadSettings(engine))
     return 9;
 
-  if (!Engine_TexturesLoad(filesTextures, TEXTURES_COUNT)) {
+  if (!Engine_TexturesLoad(engine, filesTextures, TEXTURES_COUNT)) {
     return 3;
   }
-  if (!Engine_FontsLoad(filesFonts, FONTS_COUNT))
+  if (!Engine_FontsLoad(engine, filesFonts, FONTS_COUNT))
     return 4;
-  if (!Engine_SoundsLoad(filesSounds, SOUNDS_COUNT))
+  if (!Engine_SoundsLoad(engine, filesSounds, SOUNDS_COUNT))
     return 5;
-  if (!Engine_SoundsSfxLoad(filesSoundsSfx, SOUNDS_SFX_COUNT))
+  if (!Engine_SoundsSfxLoad(engine, filesSoundsSfx, SOUNDS_SFX_COUNT))
     return 6;
-  if (!Engine_MusicLoad(fileMusic))
+  if (!Engine_MusicLoad(engine, fileMusic))
     return 7;
 
   if (!LevelMgr_LoadLevels("levels.xml"))
     return 8;
 }
 
-static int ApplicationZuma_ShowStartupImage(void) {
+static int ApplicationZuma_ShowStartupImage(Engine *engine) {
   char *basePath = SDL_GetBasePath();
 
   char resPath[100];
@@ -58,12 +58,12 @@ static int ApplicationZuma_ShowStartupImage(void) {
 
   SDL_free(basePath);
 
-  SDL_Texture *texDisc = Engine_TextureLoad(resPath);
+  SDL_Texture *texDisc = Engine_TextureLoad(engine, resPath);
   if (!texDisc)
     return 10;
 
-  SDL_RenderCopy(engine.render, texDisc, NULL, NULL);
-  SDL_RenderPresent(engine.render);
+  SDL_RenderCopy(engine->render, texDisc, NULL, NULL);
+  SDL_RenderPresent(engine->render);
   SDL_Delay(2000);
 }
 
@@ -91,41 +91,41 @@ static void ApplicationZuma_HandleEvents(App *app) {
   }
 }
 
-static void ApplicationZuma_Update(App *app) {
-  SDL_RenderClear(engine.render);
+static void ApplicationZuma_Update(Engine *engine, App *app) {
+  SDL_RenderClear(engine->render);
 
   if (app->inMenu) {
-    MenuMgr_Update(&app->menuMgr);
+    MenuMgr_Update(engine, &app->menuMgr);
 
     if (app->menuMgr.roomID == MR_GAME && app->inMenu) {
       app->inMenu = 0;
-      Game_Init(&app->game, app->curLvl, app->curDifficulty);
+      Game_Init(engine, &app->game, app->curLvl, app->curDifficulty);
     }
 
-    MenuMgr_Draw(&app->menuMgr);
+    MenuMgr_Draw(engine, &app->menuMgr);
   } else {
-    Game_Update(&app->game, &app->inMenu, app->mouseClicked);
+    Game_Update(engine, &app->game, &app->inMenu, app->mouseClicked);
     if (app->inMenu) {
-      MenuMgr_Set(&app->menuMgr, MR_GAUNTLET);
+      MenuMgr_Set(engine, &app->menuMgr, MR_GAUNTLET);
       return;
     }
 
-    Game_Draw(&app->game);
+    Game_Draw(engine, &app->game);
   }
 
-  SDL_RenderPresent(engine.render);
+  SDL_RenderPresent(engine->render);
 }
 
 int ApplicationZuma_Start(void) {
-  if (!Engine_Init())
+  Engine engine; 
+  if (!Engine_Init(&engine))
     return 1;
 
-  if (!Engine_CreateWindow("Zuma HD. By GalaxyShad and s4lat", WINDOW_WIDTH,
-                           WINDOW_HEIGHT))
+  if (!Engine_CreateWindow(&engine, "Zuma HD. By GalaxyShad and s4lat", WINDOW_WIDTH, WINDOW_HEIGHT))
     return 2;
 
-  ApplicationZuma_ShowStartupImage();
-  ApplicationZuma_LoadResources();
+  ApplicationZuma_ShowStartupImage(&engine);
+  ApplicationZuma_LoadResources(&engine);
 
   srand(time(NULL));
 
@@ -136,14 +136,14 @@ int ApplicationZuma_Start(void) {
   app.isRunning = true;
 
   MenuMgr_Init(&app.menuMgr, &app.curLvl, &app.curDifficulty);
-  MenuMgr_Set(&app.menuMgr, MR_MAIN);
+  MenuMgr_Set(&engine, &app.menuMgr, MR_MAIN);
 
   while (app.isRunning) {
     ApplicationZuma_HandleEvents(&app);
 
     app.frameStart = SDL_GetTicks();
 
-    ApplicationZuma_Update(&app);
+    ApplicationZuma_Update(&engine, &app);
 
     app.frameTime = SDL_GetTicks() - app.frameStart;
 
@@ -152,7 +152,7 @@ int ApplicationZuma_Start(void) {
   }
 
   LevelMgr_Free();
-  Engine_Destroy();
+  Engine_Destroy(&engine);
 
   return 0;
 }

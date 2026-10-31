@@ -64,10 +64,10 @@ typedef struct _Level {
     SDL_FPoint spiral2Start;
 } Level;
 
-int Level_Load(Level*);
-void Level_Draw(Level*);
-void Level_DrawTopLayer(Level* lvl);
-void Level_DrawDebug(Level*);
+int Level_Load(Engine *engine, Level*);
+void Level_Draw(Engine *engine, Level*);
+void Level_DrawTopLayer(Engine *engine, Level* lvl);
+void Level_DrawDebug(Engine *engine, Level*);
 char* Level_GetInfo(Level*);
 void Level_Free(Level*);
 

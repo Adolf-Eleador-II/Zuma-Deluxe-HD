@@ -395,7 +395,7 @@ int LevelMgr_Free() {
 ////////////////////////////////////
 ////////////////////////////////////
 
-int Level_Load(Level* level) {
+int Level_Load(Engine *engine, Level* level) {
     int ok = 1;
 
     char path[256];
@@ -410,7 +410,7 @@ int Level_Load(Level* level) {
         levelMgr.graphics[level->graphicsID].id,
         levelMgr.graphics[level->graphicsID].textureFile
     );
-    level->texture = Engine_TextureLoad(path); 
+    level->texture = Engine_TextureLoad(engine, path); 
     if (!level->texture) {
         ok = 0;
         return ok;
@@ -426,7 +426,7 @@ int Level_Load(Level* level) {
             levelMgr.graphics[level->graphicsID].id,
             levelMgr.graphics[level->graphicsID].textureTopLayerFile
         );
-        level->textureTopLayer = Engine_TextureLoad(path); 
+        level->textureTopLayer = Engine_TextureLoad(engine, path); 
     }
 
     level->spiral2 = NULL;
@@ -491,64 +491,64 @@ void Level_Free(Level* level) {
     free(level->spiral2);
 }
 
-void Level_Draw(Level* lvl) {
+void Level_Draw(Engine *engine, Level* lvl) {
     int w, h;
-    SDL_RenderGetLogicalSize(engine.render, &w, &h);
-    Engine_DrawTextureSDL(lvl->texture, w / 2, h / 2);
+    SDL_RenderGetLogicalSize(engine->render, &w, &h);
+    Engine_DrawTextureSDL(engine, lvl->texture, w / 2, h / 2);
 }
 
-void Level_DrawTopLayer(Level* lvl) {
+void Level_DrawTopLayer(Engine *engine, Level* lvl) {
     int w, h;
-    SDL_RenderGetLogicalSize(engine.render, &w, &h);
-    Engine_DrawTextureSDL(lvl->textureTopLayer, w / 2, h / 2);
+    SDL_RenderGetLogicalSize(engine->render, &w, &h);
+    Engine_DrawTextureSDL(engine, lvl->textureTopLayer, w / 2, h / 2);
 }
 
-void Level_DrawDebug(Level* lvl) {
+void Level_DrawDebug(Engine *engine, Level* lvl) {
     float sx, sy;
-    sx = (104 + lvl->spiralStart.x) * engine.scale_x;
-    sy = lvl->spiralStart.y * engine.scale_y;
-    SDL_SetRenderDrawColor(engine.render, 255, 255, 255, 160);
+    sx = (104 + lvl->spiralStart.x) * engine->scale_x;
+    sy = lvl->spiralStart.y * engine->scale_y;
+    SDL_SetRenderDrawColor(engine->render, 255, 255, 255, 160);
     for(int i = 0; i < lvl->spiralLen; i++) {
         if (lvl->spiral[i].t1)
-            SDL_SetRenderDrawColor(engine.render,
+            SDL_SetRenderDrawColor(engine->render,
                 0, 255, 0, 255);
         else 
-            SDL_SetRenderDrawColor(engine.render,
+            SDL_SetRenderDrawColor(engine->render,
                 255, 255, 255, 255);
 
         SDL_RenderDrawLineF(
-            engine.render, 
+            engine->render, 
             sx, 
             sy, 
-            sx+lvl->spiral[i].dx * engine.scale_x, 
-            sy+lvl->spiral[i].dy * engine.scale_y
+            sx+lvl->spiral[i].dx * engine->scale_x, 
+            sy+lvl->spiral[i].dy * engine->scale_y
         );
 
         /*if (lvl->spiral[i].t2) {
-            SDL_SetRenderDrawColor(engine.render,
+            SDL_SetRenderDrawColor(engine->render,
                 0, 0, 255, 128);
 
             SDL_Rect rect = {sx, sy, 16, 16};
-            SDL_RenderFillRect(engine.render, &rect);
+            SDL_RenderFillRect(engine->render, &rect);
 
-            SDL_SetRenderDrawColor(engine.render,
+            SDL_SetRenderDrawColor(engine->render,
                 255, 255, 255, 255);
         }*/
 
-        sx = sx+lvl->spiral[i].dx*engine.scale_x;
-        sy = sy+lvl->spiral[i].dy*engine.scale_y;
+        sx = sx+lvl->spiral[i].dx*engine->scale_x;
+        sy = sy+lvl->spiral[i].dy*engine->scale_y;
     }
 
     LevelGraphics* g = LevelMgr_GetLevelGraphics(lvl);
-    SDL_SetRenderDrawColor(engine.render, 0, 255, 0, 160);
+    SDL_SetRenderDrawColor(engine->render, 0, 255, 0, 160);
     for(int i = 0; i < g->coinsLen; i++) {
         SDL_FRect rect = {
-            (104 + g->coinsPos[i].x - 16)*engine.scale_x, 
-            (g->coinsPos[i].y - 16)*engine.scale_y,
+            (104 + g->coinsPos[i].x - 16)*engine->scale_x, 
+            (g->coinsPos[i].y - 16)*engine->scale_y,
             32,
             32
         };
-        SDL_RenderDrawRectF(engine.render, &rect);
+        SDL_RenderDrawRectF(engine->render, &rect);
     }
 }
 
